@@ -1,9 +1,9 @@
-# resources/anamoly_detector.py
+# resources/anomaly_detector.py
 
 # coming soon.
-class AnamolyDetector:
+class AnomalyDetector:
     def __init__(self):
         pass
 
     def train(self) -> None:
-        print(f"Anamoly detection model.")
+        print(f"Anomaly detection model.")

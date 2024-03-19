@@ -7,7 +7,7 @@ from typing import Optional
 import httpx
 from httpx import Response, Timeout
 
-from .resources import Recommender, AnamolyDetector, DataConnector
+from .resources import Recommender, AnomalyDetector, DataConnector
 from . import _exceptions
 
 __all__ = [
@@ -21,7 +21,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 class PigeonsAI:
     recommender: Recommender
-    anamoly_detector: AnamolyDetector
+    anomaly_detector: AnomalyDetector
     data_connector: DataConnector
 
     # client options
@@ -40,7 +40,7 @@ class PigeonsAI:
 
         self.recommender = Recommender(self)
         self.data_connector = DataConnector(self)
-        self.anamoly_detector = AnamolyDetector()
+        self.anomaly_detector = AnomalyDetector()
 
     @property
     def auth_headers(self) -> dict[str, str]:

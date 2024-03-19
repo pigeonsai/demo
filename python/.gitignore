@@ -2,3 +2,5 @@ dist
 build
 pigeonsai.egg-info
 tests
+
+__pycache__

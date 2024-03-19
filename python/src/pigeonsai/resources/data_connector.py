@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from .._constants import (BASE_URL_V2)
 
 import httpx
-import json
 import os
 
 if TYPE_CHECKING:
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class DataConnector:
-    data_connection_pri_global = None  # Class variable to store the global data_connection_pri
+    data_connection_pri_global = None
     train_set_pri_global = None
 
     def __init__(self, client: PigeonsAI):
@@ -38,38 +37,28 @@ class DataConnector:
             "login": db_username,
             "password": db_password,
             "port": db_port,
-            "schema": db_name
+            "schema_param": db_name
         }
 
-        try:
-            response = httpx.post(url, headers=headers, json=data, timeout=300.0)
-            response.raise_for_status()
-            result = response.json()
+        response = self.client._request("POST", url, headers=headers, data=data)
+        response_json = response.json()
 
-            res = result.get('data', {})
+        _data = response_json['data']
 
-            filtered_res = {
-                'created_at': res.get('created_at'),
-                'created_by': res.get('created_by'),
-                'data_connection_pri': res.get('data_connection_pri')
-            }
+        DataConnector.data_connection_pri_global = _data['data_connection_pri']
 
-            DataConnector.data_connection_pri_global = filtered_res.get('data_connection_pri')
+        filtered_res = {
+            'id': _data['id'],
+            'created_at': _data['created_at'],
+            'created_by': _data['created_by'],
+            'data_connection_pri': _data['data_connection_pri'],
+        }
 
-            print(
-                f'\033[38;2;85;87;93mConnector creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-            return filtered_res
+        print(
+            f'\033[38;2;85;87;93m Connector creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
+        print(f'\033[38;2;85;87;93m Data connector URI:\033[0m \033[92m{_data["data_connection_pri"]}\033[0m')
 
-        except httpx.HTTPStatusError as e:
-            error_message = e.response.text
-            try:
-                error_details = json.loads(error_message)
-                detail_message = error_details.get('message', 'No detail provided')
-                print(f"Status code: {e.response.status_code}, Detail: {detail_message}")
-            except json.JSONDecodeError:
-                print(f"Status code: {e.response.status_code}, Error: {error_message}")
-        except Exception as e:
-            raise e
+        return filtered_res
 
     def create_train_set(
         self,
@@ -114,16 +103,13 @@ class DataConnector:
                 print('Missing table name. table_name param is the name of the table you want to fetch data from.')
                 return
 
-            # todo: handle missing col name
-
             result = _prepare_data_with_connector(
+                client=self.client,
                 headers=headers,
                 train_set_name=train_set_name,
                 data_connection_pri=data_connection_pri,
                 table_name=table_name
             )
-
-            DataConnector.train_set_pri_global = result.get('res', {}).get('data_source_pri')
 
             return result
 
@@ -145,8 +131,21 @@ class DataConnector:
                 files = {'file': (file_path, f)}
                 response = httpx.post(url, headers=headers, files=files, data=data, timeout=300.0)
                 response.raise_for_status()
-                print('Success:')
-                return response.json()
+            response_json = response.json()
+
+            data_source_pri = response_json['data']
+
+            filtered_res = {
+                'train_set_pri': data_source_pri
+            }
+
+            DataConnector.train_set_pri_global = data_source_pri
+
+            print(
+                f'\033[38;2;85;87;93m Train set new revision creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
+            print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{data_source_pri}\033[0m')
+
+            return filtered_res
         except httpx.HTTPStatusError as e:
             error_message = f"Status code: {e.response.status_code}, Error: {e.response.text}"
             print(error_message)
@@ -154,7 +153,7 @@ class DataConnector:
             raise e
 
     def revision_train_set_with_connector(
-        self: str,
+        self,
         train_set_pri: str,
         table_name: str,
     ):
@@ -165,73 +164,36 @@ class DataConnector:
             'table_name': table_name,
         }
 
-        try:
-            response = httpx.post(url, headers=headers, json=data, timeout=300.0)
-            response.raise_for_status()
-            print('Success:')
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            error_message = f"Status code: {e.response.status_code}, Error: {e.response.text}"
-            print(error_message)
-        except httpx.RequestError as e:
-            error_message = f"An error occurred while making the request to {e.request.url}: {e.message}"
-            print(error_message)
-            raise httpx.RequestError(error_message, request=e.request)
-        except Exception as e:
-            raise e
+        response = self.client._request("POST", url, headers=headers, data=data)
+        response_json = response.json()
 
-    def delete_train_set(
-        self,
-        train_set_pri: str
-    ):
-        """
-        Sends a request to delete a data source.
+        data_source_pri = response_json['data']
 
-        Parameters:
-        - train_set_pri: int. The ID of the data source to be deleted.
+        filtered_res = {
+            'train_set_pri': data_source_pri
+        }
 
-        Returns:
-        - A message indicating the outcome of the operation.
-        """
+        DataConnector.train_set_pri_global = data_source_pri
 
+        print(
+            f'\033[38;2;85;87;93m Train set creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
+        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{data_source_pri}\033[0m')
+
+        return filtered_res
+
+    def delete_train_set(self, train_set_pri: str):
         url = f"{BASE_URL_V2}/delete-data-source"
         data = {"train_set_pri": train_set_pri}
         headers = self.client.auth_headers
 
-        try:
-            response = httpx.post(url, headers=headers, json=data, timeout=300.0)
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            error_message = f"Status code: {e.response.status_code}, Error: {e.response.text}"
-            print(error_message)
-        except Exception as e:
-            raise e
+        return self.client._request("POST", url, headers=headers, data=data)
 
     def delete_data_connector(self, data_connector_pri: str):
-        """
-        Sends a request to delete a data connector.
-
-        Parameters:
-        - conn_id: int. The ID of the data connector to be deleted.
-
-        Returns:
-        - A message indicating the outcome of the operation.
-        """
-
         url = f"{BASE_URL_V2}/delete-data-connector"
         data = {"data_connector_pri": data_connector_pri}
         headers = self.client.auth_headers
 
-        try:
-            response = httpx.post(url, headers=headers, json=data, timeout=300.0)
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            error_message = f"Status code: {e.response.status_code}, Error: {e.response.text}"
-            print(error_message)
-        except Exception as e:
-            raise e
+        return self.client._request("POST", url, headers=headers, data=data)
 
 
 def _prepare_data_with_file(
@@ -252,32 +214,35 @@ def _prepare_data_with_file(
         'file_name': file_name,
         'file_size': str(file_size)
     }
-
     try:
         with open(file_path, 'rb') as f:
             files = {'file': (file_path, f)}
             response = httpx.post(url, headers=headers, files=files, data=data, timeout=300.0)
             response.raise_for_status()
-        print('Success:')
-        result = response.json()
-        res = result.get('data', {})
+        response_json = response.json()
+
+        _data = response_json['data']
 
         filtered_res = {
-            'created_at': res.get('created_at'),
-            'created_by': res.get('created_by'),
-            'train_set_pri': res.get('data_source_pri'),
+            'id': _data['id'],
+            'created_at': _data.get('created_at'),
+            'created_by': _data.get('created_by'),
+            'train_set_pri': _data.get('data_source_pri')
         }
+
+        DataConnector.train_set_pri_global = _data.get("data_source_pri", "")
+
+        print(
+            f'\033[38;2;85;87;93m Train set creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
+        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("data_source_pri", "")}\033[0m')
+
         return filtered_res
-    except httpx.HTTPStatusError as e:
-        # For responses with error status codes (4XX, 5XX)
-        error_message = f"Status code: {e.response.status_code}, Error: {e.response.text}"
-        print(error_message)
-        raise httpx.HTTPStatusError(error_message, request=e.request, response=e.response)
     except Exception as e:
         raise e
 
 
 def _prepare_data_with_connector(
+    client: PigeonsAI,
     train_set_name: str,
     data_connection_pri: str,
     table_name: str,
@@ -289,24 +254,22 @@ def _prepare_data_with_connector(
         'data_connection_pri': data_connection_pri,
         'table_name': table_name
     }
-    try:
-        response = httpx.post(url, headers=headers, json=data, timeout=300.0)
-        response.raise_for_status()
-        result = response.json()
-        res = result.get('data', {})
+    response = client._request("POST", url, headers=headers, data=data)
+    response_json = response.json()
 
-        filtered_res = {
-            'created_at': res.get('created_at'),
-            'created_by': res.get('created_by'),
-            'train_set_pri': res.get('data_source_pri')
-        }
+    _data = response_json['data']
 
-        print(
-            f'\033[38;2;85;87;93mData source creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
+    filtered_res = {
+        'id': _data['id'],
+        'created_at': _data.get('created_at'),
+        'created_by': _data.get('created_by'),
+        'train_set_pri': _data.get('data_source_pri')
+    }
 
-        return filtered_res
-    except httpx.HTTPStatusError as e:
-        error_message = f"Status code: {e.response.status_code}, Error: {e.response.text}"
-        print(error_message)
-    except Exception as e:
-        raise e
+    DataConnector.train_set_pri_global = _data.get("data_source_pri", "")
+
+    print(
+        f'\033[38;2;85;87;93m Train set creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
+    print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("data_source_pri", "")}\033[0m')
+
+    return filtered_res

@@ -155,14 +155,11 @@ class DataConnector:
     def revision_train_set_with_connector(
         self,
         train_set_pri: str,
-        table_name: str,
     ):
         url = f"{BASE_URL_V2}/revision-data-source-with-connector"
         headers = self.client.auth_headers
-        data = {
-            'train_set_pri': train_set_pri,
-            'table_name': table_name,
-        }
+
+        data = {'train_set_pri': train_set_pri}
 
         response = self.client._request("POST", url, headers=headers, data=data)
         response_json = response.json()

@@ -84,7 +84,7 @@ class PigeonsAI:
                     f"Server error: {error_detail}", response=e.response, body=error_body) from e
             else:
                 raise _exceptions.APIStatusError(
-                    f"Unexpected error: {e}. Server said: {error_detail}", response=e.response, body=error_body) from e
+                    f"Unexpected error: {e}. Detail: {error_detail}", response=e.response, body=error_body) from e
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
             raise _exceptions.APIError("Unexpected error") from e

@@ -177,16 +177,16 @@ class VAE(BaseModelTrainer):
     def retrain(
         self,
         unique_identifier: str,
-        automatic_data_revision: bool,
+        pull_latest_data: bool,
     ):
         if not unique_identifier:
             print('unique_identifier is required.')
-        if not automatic_data_revision:
+        if not pull_latest_data:
             print('automatic_data_revision is required.')
 
         data = {
             'unique_identifier': unique_identifier,
-            'automatic_data_revision': automatic_data_revision,
+            'pull_latest_data': pull_latest_data,
         }
 
         url = BASE_URL_V2 + '/retrain'

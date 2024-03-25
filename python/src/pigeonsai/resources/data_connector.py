@@ -133,17 +133,17 @@ class DataConnector:
                 response.raise_for_status()
             response_json = response.json()
 
-            data_source_uri = response_json['data']
+            train_dataset_uri = response_json['data']
 
             filtered_res = {
-                'train_set_uri': data_source_uri
+                'train_set_uri': train_dataset_uri
             }
 
-            DataConnector.train_set_uri_global = data_source_uri
+            DataConnector.train_set_uri_global = train_dataset_uri
 
             print(
                 f'\033[38;2;85;87;93m Train set new revision creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-            print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{data_source_uri}\033[0m')
+            print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{train_dataset_uri}\033[0m')
 
             return filtered_res
         except httpx.HTTPStatusError as e:
@@ -164,17 +164,17 @@ class DataConnector:
         response = self.client._request("POST", url, headers=headers, data=data)
         response_json = response.json()
 
-        data_source_uri = response_json['data']
+        train_dataset_uri = response_json['data']
 
         filtered_res = {
-            'train_set_uri': data_source_uri
+            'train_set_uri': train_dataset_uri
         }
 
-        DataConnector.train_set_uri_global = data_source_uri
+        DataConnector.train_set_uri_global = train_dataset_uri
 
         print(
             f'\033[38;2;85;87;93m Train set creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{data_source_uri}\033[0m')
+        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{train_dataset_uri}\033[0m')
 
         return filtered_res
 
@@ -224,14 +224,14 @@ def _prepare_data_with_file(
             'id': _data['id'],
             'created_at': _data.get('created_at'),
             'created_by': _data.get('created_by'),
-            'train_set_uri': _data.get('data_source_uri')
+            'train_set_uri': _data.get('train_dataset_uri')
         }
 
-        DataConnector.train_set_uri_global = _data.get("data_source_uri", "")
+        DataConnector.train_set_uri_global = _data.get("train_dataset_uri", "")
 
         print(
             f'\033[38;2;85;87;93m Train set creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("data_source_uri", "")}\033[0m')
+        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("train_dataset_uri", "")}\033[0m')
 
         return filtered_res
     except Exception as e:
@@ -260,13 +260,13 @@ def _prepare_data_with_connector(
         'id': _data['id'],
         'created_at': _data.get('created_at'),
         'created_by': _data.get('created_by'),
-        'train_set_uri': _data.get('data_source_uri')
+        'train_set_uri': _data.get('train_dataset_uri')
     }
 
-    DataConnector.train_set_uri_global = _data.get("data_source_uri", "")
+    DataConnector.train_set_uri_global = _data.get("train_dataset_uri", "")
 
     print(
         f'\033[38;2;85;87;93m Train set creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-    print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("data_source_uri", "")}\033[0m')
+    print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("train_dataset_uri", "")}\033[0m')
 
     return filtered_res

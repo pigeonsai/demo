@@ -40,7 +40,7 @@ class BaseModelTrainer:
 
         data = {
             'custom_model_name': custom_model_name,
-            'data_source_uri': train_set_uri,
+            'train_dataset_uri': train_set_uri,
             'original_model_name': 'Recommender',
             'model_architecture': self.model_architecture,
         }

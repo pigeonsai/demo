@@ -31,16 +31,16 @@ class BaseModelTrainer:
         self.client = client
         self.model_architecture = model_architecture
 
-    def _train(self, custom_model_name: str, train_set_pri: Optional[str] = None, **kwargs):
-        if not train_set_pri and DataConnector.train_set_pri_global:
-            train_set_pri = DataConnector.train_set_pri_global
+    def _train(self, custom_model_name: str, train_set_uri: Optional[str] = None, **kwargs):
+        if not train_set_uri and DataConnector.train_set_uri_global:
+            train_set_uri = DataConnector.train_set_uri_global
 
-        if not train_set_pri:
-            raise ValueError("train_set_pri must be provided")
+        if not train_set_uri:
+            raise ValueError("train_set_uri must be provided")
 
         data = {
             'custom_model_name': custom_model_name,
-            'data_source_pri': train_set_pri,
+            'data_source_uri': train_set_uri,
             'original_model_name': 'Recommender',
             'model_architecture': self.model_architecture,
         }
@@ -104,7 +104,7 @@ class Transformer(BaseModelTrainer):
     def train(
         self,
         custom_model_name: str,
-        train_set_pri: Optional[str] = None,
+        train_set_uri: Optional[str] = None,
         n_epochs: Optional[str] = None,
         batch_size: Optional[str] = None,
         learn_rate: Optional[str] = None,
@@ -114,7 +114,7 @@ class Transformer(BaseModelTrainer):
             'batch_size': batch_size,
             'learn_rate': learn_rate,
         }
-        return self._train(custom_model_name, train_set_pri, **{k: v for k, v in kwargs.items() if v is not None})
+        return self._train(custom_model_name, train_set_uri, **{k: v for k, v in kwargs.items() if v is not None})
 
     def inference(
         self,
@@ -140,7 +140,7 @@ class VAE(BaseModelTrainer):
     def train(
         self,
         custom_model_name: str,
-        train_set_pri: Optional[str] = None,
+        train_set_uri: Optional[str] = None,
         n_epochs: Optional[str] = None,
         batch_size: Optional[str] = None,
         learn_rate: Optional[str] = None,
@@ -172,7 +172,7 @@ class VAE(BaseModelTrainer):
             'likelihood': likelihood,
             'data_subset_percent': data_subset_percent,
         }
-        return self._train(custom_model_name, train_set_pri, **{k: v for k, v in kwargs.items() if v is not None})
+        return self._train(custom_model_name, train_set_uri, **{k: v for k, v in kwargs.items() if v is not None})
 
     def retrain(
         self,

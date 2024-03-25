@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 
 
 class DataConnector:
-    data_connection_pri_global = None
-    train_set_pri_global = None
+    data_connection_uri_global = None
+    train_set_uri_global = None
 
     def __init__(self, client: PigeonsAI):
         self.client = client
@@ -45,18 +45,18 @@ class DataConnector:
 
         _data = response_json['data']
 
-        DataConnector.data_connection_pri_global = _data['data_connection_pri']
+        DataConnector.data_connection_uri_global = _data['data_connection_uri']
 
         filtered_res = {
             'id': _data['id'],
             'created_at': _data['created_at'],
             'created_by': _data['created_by'],
-            'data_connection_pri': _data['data_connection_pri'],
+            'data_connection_uri': _data['data_connection_uri'],
         }
 
         print(
             f'\033[38;2;85;87;93m Connector creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-        print(f'\033[38;2;85;87;93m Data connector URI:\033[0m \033[92m{_data["data_connection_pri"]}\033[0m')
+        print(f'\033[38;2;85;87;93m Data connector URI:\033[0m \033[92m{_data["data_connection_uri"]}\033[0m')
 
         return filtered_res
 
@@ -65,19 +65,19 @@ class DataConnector:
         type: str,
         train_set_name: str,
         file_path: str = None,
-        data_connection_pri: str = None,
+        data_connection_uri: str = None,
         table_name: str = None,
     ):
 
-        # Use the global data_connection_pri if not provided
-        if not data_connection_pri and DataConnector.data_connection_pri_global:
-            data_connection_pri = DataConnector.data_connection_pri_global
+        # Use the global data_connection_uri if not provided
+        if not data_connection_uri and DataConnector.data_connection_uri_global:
+            data_connection_uri = DataConnector.data_connection_uri_global
 
-        if (file_path and data_connection_pri) or (file_path and table_name):
+        if (file_path and data_connection_uri) or (file_path and table_name):
             print("Only one of file or connector_details with table_name should be provided.")
             return
 
-        elif not file_path and not data_connection_pri and not table_name:
+        elif not file_path and not data_connection_uri and not table_name:
             print("Either file or connector_details with table_name must be provided.")
             return
 
@@ -107,7 +107,7 @@ class DataConnector:
                 client=self.client,
                 headers=headers,
                 train_set_name=train_set_name,
-                data_connection_pri=data_connection_pri,
+                data_connection_uri=data_connection_uri,
                 table_name=table_name
             )
 
@@ -115,7 +115,7 @@ class DataConnector:
 
     def revision_train_set_with_file(
         self,
-        train_set_pri: str,
+        train_set_uri: str,
         file_path: str,
     ):
         url = f"{BASE_URL_V2}/revision-data-source-with-file"
@@ -123,7 +123,7 @@ class DataConnector:
         if 'Content-Type' in headers:
             headers.pop('Content-Type')
         data = {
-            'train_set_pri': train_set_pri,
+            'train_set_uri': train_set_uri,
         }
 
         try:
@@ -133,17 +133,17 @@ class DataConnector:
                 response.raise_for_status()
             response_json = response.json()
 
-            data_source_pri = response_json['data']
+            data_source_uri = response_json['data']
 
             filtered_res = {
-                'train_set_pri': data_source_pri
+                'train_set_uri': data_source_uri
             }
 
-            DataConnector.train_set_pri_global = data_source_pri
+            DataConnector.train_set_uri_global = data_source_uri
 
             print(
                 f'\033[38;2;85;87;93m Train set new revision creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-            print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{data_source_pri}\033[0m')
+            print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{data_source_uri}\033[0m')
 
             return filtered_res
         except httpx.HTTPStatusError as e:
@@ -154,40 +154,40 @@ class DataConnector:
 
     def revision_train_set_with_connector(
         self,
-        train_set_pri: str,
+        train_set_uri: str,
     ):
         url = f"{BASE_URL_V2}/revision-data-source-with-connector"
         headers = self.client.auth_headers
 
-        data = {'train_set_pri': train_set_pri}
+        data = {'train_set_uri': train_set_uri}
 
         response = self.client._request("POST", url, headers=headers, data=data)
         response_json = response.json()
 
-        data_source_pri = response_json['data']
+        data_source_uri = response_json['data']
 
         filtered_res = {
-            'train_set_pri': data_source_pri
+            'train_set_uri': data_source_uri
         }
 
-        DataConnector.train_set_pri_global = data_source_pri
+        DataConnector.train_set_uri_global = data_source_uri
 
         print(
             f'\033[38;2;85;87;93m Train set creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{data_source_pri}\033[0m')
+        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{data_source_uri}\033[0m')
 
         return filtered_res
 
-    def delete_train_set(self, train_set_pri: str):
+    def delete_train_set(self, train_set_uri: str):
         url = f"{BASE_URL_V2}/delete-data-source"
-        data = {"train_set_pri": train_set_pri}
+        data = {"train_set_uri": train_set_uri}
         headers = self.client.auth_headers
 
         return self.client._request("POST", url, headers=headers, data=data)
 
-    def delete_data_connector(self, data_connector_pri: str):
+    def delete_data_connector(self, data_connector_uri: str):
         url = f"{BASE_URL_V2}/delete-data-connector"
-        data = {"data_connector_pri": data_connector_pri}
+        data = {"data_connector_uri": data_connector_uri}
         headers = self.client.auth_headers
 
         return self.client._request("POST", url, headers=headers, data=data)
@@ -224,14 +224,14 @@ def _prepare_data_with_file(
             'id': _data['id'],
             'created_at': _data.get('created_at'),
             'created_by': _data.get('created_by'),
-            'train_set_pri': _data.get('data_source_pri')
+            'train_set_uri': _data.get('data_source_uri')
         }
 
-        DataConnector.train_set_pri_global = _data.get("data_source_pri", "")
+        DataConnector.train_set_uri_global = _data.get("data_source_uri", "")
 
         print(
             f'\033[38;2;85;87;93m Train set creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("data_source_pri", "")}\033[0m')
+        print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("data_source_uri", "")}\033[0m')
 
         return filtered_res
     except Exception as e:
@@ -241,14 +241,14 @@ def _prepare_data_with_file(
 def _prepare_data_with_connector(
     client: PigeonsAI,
     train_set_name: str,
-    data_connection_pri: str,
+    data_connection_uri: str,
     table_name: str,
     headers,
 ):
     url = f"{BASE_URL_V2}/create-data-source-with-connector"
     data = {
         'data_source_name': train_set_name,
-        'data_connection_pri': data_connection_pri,
+        'data_connection_uri': data_connection_uri,
         'table_name': table_name
     }
     response = client._request("POST", url, headers=headers, data=data)
@@ -260,13 +260,13 @@ def _prepare_data_with_connector(
         'id': _data['id'],
         'created_at': _data.get('created_at'),
         'created_by': _data.get('created_by'),
-        'train_set_pri': _data.get('data_source_pri')
+        'train_set_uri': _data.get('data_source_uri')
     }
 
-    DataConnector.train_set_pri_global = _data.get("data_source_pri", "")
+    DataConnector.train_set_uri_global = _data.get("data_source_uri", "")
 
     print(
         f'\033[38;2;85;87;93m Train set creation successful:\033[0m \033[92m{response.status_code} {response.reason_phrase}\033[0m')
-    print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("data_source_pri", "")}\033[0m')
+    print(f'\033[38;2;85;87;93m Train set URI:\033[0m \033[92m{_data.get("data_source_uri", "")}\033[0m')
 
     return filtered_res

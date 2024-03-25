@@ -207,7 +207,7 @@ def _prepare_data_with_file(
         headers.pop('Content-Type')
 
     data = {
-        'data_source_name': train_set_name,
+        'train_dataset_name': train_set_name,
         'file_name': file_name,
         'file_size': str(file_size)
     }
@@ -247,7 +247,7 @@ def _prepare_data_with_connector(
 ):
     url = f"{BASE_URL_V2}/create-data-source-with-connector"
     data = {
-        'data_source_name': train_set_name,
+        'train_dataset_name': train_set_name,
         'data_connection_uri': data_connection_uri,
         'table_name': table_name
     }

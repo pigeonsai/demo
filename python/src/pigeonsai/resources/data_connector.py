@@ -118,7 +118,7 @@ class DataConnector:
         train_set_uri: str,
         file_path: str,
     ):
-        url = f"{BASE_URL_V2}/revision-data-source-with-file"
+        url = f"{BASE_URL_V2}/revision-train-dataset-with-file"
         headers = self.client.auth_headers
         if 'Content-Type' in headers:
             headers.pop('Content-Type')
@@ -156,7 +156,7 @@ class DataConnector:
         self,
         train_set_uri: str,
     ):
-        url = f"{BASE_URL_V2}/revision-data-source-with-connector"
+        url = f"{BASE_URL_V2}/revision-train-dataset-with-connector"
         headers = self.client.auth_headers
 
         data = {'train_set_uri': train_set_uri}
@@ -179,7 +179,7 @@ class DataConnector:
         return filtered_res
 
     def delete_train_set(self, train_set_uri: str):
-        url = f"{BASE_URL_V2}/delete-data-source"
+        url = f"{BASE_URL_V2}/delete-train-dataset"
         data = {"train_set_uri": train_set_uri}
         headers = self.client.auth_headers
 
@@ -198,7 +198,7 @@ def _prepare_data_with_file(
     train_set_name: str,
     file_path: str,
 ):
-    url = f"{BASE_URL_V2}/create-data-source-with-file"
+    url = f"{BASE_URL_V2}/create-train-dataset-with-file"
 
     file_name = os.path.basename(file_path)
     file_size = os.path.getsize(file_path)
@@ -245,7 +245,7 @@ def _prepare_data_with_connector(
     table_name: str,
     headers,
 ):
-    url = f"{BASE_URL_V2}/create-data-source-with-connector"
+    url = f"{BASE_URL_V2}/create-train-dataset-with-connector"
     data = {
         'train_dataset_name': train_set_name,
         'data_connection_uri': data_connection_uri,

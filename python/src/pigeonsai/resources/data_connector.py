@@ -6,6 +6,7 @@ from .._constants import (BASE_URL_V2)
 
 import httpx
 import os
+import json
 
 if TYPE_CHECKING:
     from .._client import PigeonsAI
@@ -64,6 +65,7 @@ class DataConnector:
         self,
         type: str,
         train_set_name: str,
+        columns_map: dict,
         file_path: str = None,
         data_connection_uri: str = None,
         table_name: str = None,
@@ -72,14 +74,6 @@ class DataConnector:
         # Use the global data_connection_uri if not provided
         if not data_connection_uri and DataConnector.data_connection_uri_global:
             data_connection_uri = DataConnector.data_connection_uri_global
-
-        if (file_path and data_connection_uri) or (file_path and table_name):
-            print("Only one of file or connector_details with table_name should be provided.")
-            return
-
-        elif not file_path and not data_connection_uri and not table_name:
-            print("Either file or connector_details with table_name must be provided.")
-            return
 
         type = type.lower()
         if not type:
@@ -95,7 +89,8 @@ class DataConnector:
             return _prepare_data_with_file(
                 headers=headers,
                 train_set_name=train_set_name,
-                file_path=file_path
+                file_path=file_path,
+                columns_map=columns_map
             )
 
         if type == 'connection':
@@ -103,15 +98,22 @@ class DataConnector:
                 print('Missing table name. table_name param is the name of the table you want to fetch data from.')
                 return
 
-            result = _prepare_data_with_connector(
+            if not data_connection_uri:
+                print('Missing data_connection_uri. data_connection_uri param is the uri of the data connection.')
+                return
+
+            if not table_name:
+                print('Missing table name. table_name param is the name of the table you want to fetch data from.')
+                return
+
+            return _prepare_data_with_connector(
                 client=self.client,
                 headers=headers,
                 train_set_name=train_set_name,
                 data_connection_uri=data_connection_uri,
-                table_name=table_name
+                table_name=table_name,
+                columns_map=columns_map
             )
-
-            return result
 
     def revision_train_set_with_file(
         self,
@@ -147,9 +149,10 @@ class DataConnector:
 
             return filtered_res
         except httpx.HTTPStatusError as e:
-            error_message = f"Status code: {e.response.status_code}, Error: {e.response.text}"
+            error_message = f"Status code: {e.response.status_code}, detail: {e.response.text}"
             print(error_message)
         except Exception as e:
+            print(f'Status code: {e.response.status_code}, detail: {e.response.text}')
             raise e
 
     def revision_train_set_with_connector(
@@ -197,6 +200,7 @@ def _prepare_data_with_file(
     headers,
     train_set_name: str,
     file_path: str,
+    columns_map: dict
 ):
     url = f"{BASE_URL_V2}/create-train-dataset-with-file"
 
@@ -209,7 +213,8 @@ def _prepare_data_with_file(
     data = {
         'train_dataset_name': train_set_name,
         'file_name': file_name,
-        'file_size': str(file_size)
+        'file_size': str(file_size),
+        'columns_map': json.dumps(columns_map)
     }
     try:
         with open(file_path, 'rb') as f:
@@ -235,6 +240,7 @@ def _prepare_data_with_file(
 
         return filtered_res
     except Exception as e:
+        print(f'Status code: {e.response.status_code}, detail: {e.response.text}')
         raise e
 
 
@@ -243,13 +249,15 @@ def _prepare_data_with_connector(
     train_set_name: str,
     data_connection_uri: str,
     table_name: str,
+    columns_map: dict,
     headers,
 ):
     url = f"{BASE_URL_V2}/create-train-dataset-with-connector"
     data = {
         'train_dataset_name': train_set_name,
         'data_connection_uri': data_connection_uri,
-        'table_name': table_name
+        'table_name': table_name,
+        'columns_map': columns_map
     }
     response = client._request("POST", url, headers=headers, data=data)
     response_json = response.json()

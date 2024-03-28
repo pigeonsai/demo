@@ -96,6 +96,35 @@ class BaseModelTrainer:
         except Exception as e:
             raise e
 
+    def _retrain(
+        self,
+        unique_identifier: str,
+        pull_latest_data: bool,
+    ):
+        if not unique_identifier:
+            print('unique_identifier is required.')
+            return
+        if pull_latest_data is None:
+            print('pull_latest_data is required.')
+            return
+
+        data = {
+            'unique_identifier': unique_identifier,
+            'pull_latest_data': pull_latest_data,
+        }
+
+        url = BASE_URL_V2 + '/retrain'
+        headers = self.client.auth_headers
+        
+        print(f'\033[38;2;229;192;108m Initializing {unique_identifier} re-training \033[0m')
+
+        response = self.client._request("POST", url, headers=headers, data=data)
+        response_json = response.json()
+        
+        print(f'\033[38;2;85;87;93m Re-training job creation successful.\033[0m')
+        print(f'\033[38;2;85;87;93m Detail:\033[0m \033[92m{response_json["data"]}\033[0m')
+
+        return response
 
 class Transformer(BaseModelTrainer):
     def __init__(self, client: PigeonsAI):
@@ -130,6 +159,16 @@ class Transformer(BaseModelTrainer):
             k=k,
             model_uri=model_uri,
             model_name=model_name
+        )
+        
+    def retrain(
+        self,
+        unique_identifier: str,
+        pull_latest_data: bool,
+    ):
+        return self._retrain(
+            unique_identifier=unique_identifier,
+            pull_latest_data=pull_latest_data,
         )
 
 
@@ -173,27 +212,7 @@ class VAE(BaseModelTrainer):
             'data_subset_percent': data_subset_percent,
         }
         return self._train(custom_model_name, train_set_uri, **{k: v for k, v in kwargs.items() if v is not None})
-
-    def retrain(
-        self,
-        unique_identifier: str,
-        pull_latest_data: bool,
-    ):
-        if not unique_identifier:
-            print('unique_identifier is required.')
-        if not pull_latest_data:
-            print('automatic_data_revision is required.')
-
-        data = {
-            'unique_identifier': unique_identifier,
-            'pull_latest_data': pull_latest_data,
-        }
-
-        url = BASE_URL_V2 + '/retrain'
-        headers = self.client.auth_headers
-
-        return self.client._request("POST", url, headers=headers, data=data)
-
+        
     def inference(
         self,
         user_history_ids: Optional[str] = None,
@@ -208,6 +227,16 @@ class VAE(BaseModelTrainer):
             k=k,
             model_uri=model_uri,
             model_name=model_name
+        )
+        
+    def retrain(
+        self,
+        unique_identifier: str,
+        pull_latest_data: bool,
+    ):
+        return self._retrain(
+            unique_identifier=unique_identifier,
+            pull_latest_data=pull_latest_data,
         )
 
 

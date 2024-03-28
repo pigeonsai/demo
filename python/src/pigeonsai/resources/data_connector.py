@@ -32,13 +32,13 @@ class DataConnector:
         url = f"{BASE_URL_V2}/create-data-connector"
         headers = self.client.auth_headers
         data = {
-            "conn_id": connection_name,
-            "conn_type": connection_type,
-            "host": db_host,
-            "login": db_username,
-            "password": db_password,
-            "port": db_port,
-            "schema_param": db_name
+            "data_connection_custom_name": connection_name,
+            "data_connection_type": connection_type,
+            "data_connection_host": db_host,
+            "data_connection_port": db_port,
+            "data_connection_database_name": db_name,
+            "data_connection_username": db_username,
+            "data_connection_password": db_password
         }
 
         response = self.client._request("POST", url, headers=headers, data=data)
